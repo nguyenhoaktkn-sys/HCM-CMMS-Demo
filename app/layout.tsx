@@ -1,30 +1,23 @@
-"use client"
-
+import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { Sidebar } from "@/components/Sidebar"
-import { usePathname } from "next/navigation"
 
 const inter = Inter({ subsets: ["latin"] })
+
+export const metadata: Metadata = {
+  title: "HCM1 ASM - HỆ THỐNG QUẢN LÝ BẢO TRÌ (CMMS)",
+  description: "Hệ thống quản lý bảo trì vận hành",
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const pathname = usePathname()
-  const isLoginPage = pathname === "/login"
-
   return (
-    <html lang="vi">
-      <body className={`${inter.className} flex bg-gray-50`}>
-        {/* Chỉ hiện Sidebar nếu không phải trang Login */}
-        {!isLoginPage && <Sidebar />}
-
-        {/* Nội dung màn hình chính */}
-        <main className="flex-1 min-h-screen">
-          {children}
-        </main>
+    <html lang="vi" className="dark">
+      <body className={`${inter.className} bg-[#0b0f19] text-slate-100 min-h-screen`}>
+        {children}
       </body>
     </html>
   )
