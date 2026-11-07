@@ -56,7 +56,7 @@ export default function DashboardASM() {
       {/* 1. HEADER TRÊN CÙNG */}
       <header className="bg-[#0f172a] border-b border-slate-800 px-6 py-3 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="bg-red-600 text-white font-black px-3 py-1 rounded text-xl tracking-tighter">
+          <div className="bg-orange-600 text-white font-black px-3 py-1 rounded text-xl tracking-tighter">
             SPX
           </div>
           <div>
