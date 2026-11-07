@@ -1,62 +1,38 @@
-"use client"
+// Bổ sung LogOut vào dòng import từ lucide-react ở đầu file:
+import { LayoutDashboard, Wrench, Calendar, BarChart3, Settings, LogOut } from "lucide-react"
+import { useRouter } from "next/navigation"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { LayoutDashboard, Wrench, Calendar, BarChart3, Settings } from "lucide-react"
-
-const menuItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Danh sách Thiết bị", href: "/thiet-bi", icon: Wrench },
-  { name: "Lịch bảo trì (PM)", href: "/bao-tri", icon: Calendar },
-  { name: "Báo cáo & Thống kê", href: "/bao-cao", icon: BarChart3 },
-]
-
+// Thêm logic handleLogout trong component Sidebar:
 export function Sidebar() {
   const pathname = usePathname()
+  const router = router = useRouter()
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn")
+    localStorage.removeItem("userRole")
+    router.push("/login")
+  }
 
   return (
-    <div className="w-64 bg-slate-900 text-white min-h-screen p-4 flex flex-col justify-between">
-      <div>
-        {/* Logo / Tên hệ thống */}
-        <div className="flex items-center gap-2 mb-8 px-2">
-          <Wrench className="h-7 w-7 text-blue-400" />
-          <span className="font-bold text-xl tracking-wide">CMMS SYSTEM</span>
-        </div>
+    // ... Phần giao diện giữ nguyên ...
 
-        {/* Danh sách Menu */}
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                {item.name}
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
-
-      {/* Cài đặt ở đáy Sidebar */}
-      <div className="border-t border-slate-800 pt-4">
-        <Link
-          href="/cai-dat"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
-        >
-          <Settings className="h-5 w-5" />
-          Cài đặt hệ thống
-        </Link>
-      </div>
+    {/* Sửa lại phần Cài đặt & Đăng xuất ở cuối Sidebar */}
+    <div className="border-t border-slate-800 pt-4 space-y-1">
+      <Link
+        href="/cai-dat"
+        className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+      >
+        <Settings className="h-5 w-5" />
+        Cài đặt hệ thống
+      </Link>
+      
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+      >
+        <LogOut className="h-5 w-5" />
+        Đăng xuất
+      </button>
     </div>
   )
 }
