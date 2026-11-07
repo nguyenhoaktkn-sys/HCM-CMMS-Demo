@@ -60,9 +60,10 @@ export default function DashboardASM() {
             SPX
           </div>
           <div>
-            <span className="text-xs text-blue-400 block font-semibold">Nhoctute1990</span>
+            <span className="text-xs text-blue-400 block font-semibold">Nhockute1990</span>
           </div>
         </div>
+        
 
         <div className="text-center">
           <h1 className="text-xl font-extrabold tracking-wider text-white">HCM1 ASM</h1>
