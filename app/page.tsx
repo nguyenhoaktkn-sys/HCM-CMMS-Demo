@@ -60,7 +60,7 @@ export default function DashboardASM() {
             SPX
           </div>
           <div>
-            <span className="text-xs text-blue-400 block font-semibold">Dept. HCM Tech</span>
+            <span className="text-xs text-blue-400 block font-semibold">Nhoctute1990</span>
           </div>
         </div>
 
