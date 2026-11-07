@@ -64,7 +64,6 @@ export default function DashboardASM() {
           </div>
         </div>
         
-
         <div className="text-center">
           <h1 className="text-xl font-extrabold tracking-wider text-white">HCM1 ASM</h1>
           <p className="text-sm font-semibold text-blue-400 tracking-widest">HỆ THỐNG QUẢN LÝ BẢO TRÌ (CMMS)</p>
