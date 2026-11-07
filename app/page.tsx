@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { 
   LogOut, Clock, Globe, Settings, Filter, ChevronDown, 
-  AlertTriangle, Wrench, Activity, ShieldCheck, DollarSign 
+  Wrench, ShieldAlert 
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,18 +29,26 @@ const topFailures = [
 ]
 
 export default function DashboardASM() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("TongQuan")
 
+  // Xử lý sự kiện Đăng xuất
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn")
+    localStorage.removeItem("userRole")
+    router.push("/login")
+  }
+
   const navItems = [
-    { id: "TongQuan", label: "📊 Tổng quan" },
-    { id: "SoSanh", label: "📉 So sánh" },
-    { id: "SuCo", label: "⚠️ Sự cố" },
-    { id: "BaoCao", label: "📋 Báo cáo" },
-    { id: "BaoTri", label: "🛠️ Bảo trì" },
-    { id: "PhuTung", label: "⚙️ Phụ tùng" },
-    { id: "ThietBi", label: "🖥️ Thiết bị" },
-    { id: "WorkOrder", label: "📄 Work Order" },
-    { id: "LichCa", label: "📅 Lịch ca" },
+    { id: "TongQuan", label: "📊 Tổng quan", path: "/" },
+    { id: "SoSanh", label: "📉 So sánh", path: "/bao-cao" },
+    { id: "SuCo", label: "⚠️ Sự cố", path: "/thiet-bi" },
+    { id: "BaoCao", label: "📋 Báo cáo", path: "/bao-cao" },
+    { id: "BaoTri", label: "🛠️ Bảo trì", path: "/bao-tri" },
+    { id: "PhuTung", label: "⚙️ Phụ tùng", path: "/thiet-bi" },
+    { id: "ThietBi", label: "🖥️ Thiết bị", path: "/thiet-bi" },
+    { id: "WorkOrder", label: "📄 Work Order", path: "/bao-tri" },
+    { id: "LichCa", label: "📅 Lịch ca", path: "/lich-lam-viec" },
   ]
 
   return (
@@ -63,16 +72,19 @@ export default function DashboardASM() {
         <div className="flex items-center gap-4 text-xs text-slate-300">
           <div className="flex items-center gap-1"><Clock className="w-4 h-4 text-blue-400" /> Thứ Bảy, 07/11/2026 - 20:10</div>
           <div className="flex items-center gap-1 cursor-pointer hover:text-white"><Globe className="w-4 h-4" /> Tiếng Việt VN</div>
-          <Settings className="w-4 h-4 cursor-pointer hover:text-white" />
+          <Settings className="w-4 h-4 cursor-pointer hover:text-white" onClick={() => router.push("/cai-dat")} />
         </div>
       </header>
 
-      {/* 2. THANH MENU ĐIỀU HƯỚNG DẠNG NGHANG */}
+      {/* 2. THANH MENU ĐIỀU HƯỚNG DẠNG NGANG */}
       <nav className="bg-[#1e293b] border-b border-slate-800 px-6 flex gap-1 overflow-x-auto">
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => {
+              setActiveTab(item.id)
+              if (item.path !== "/") router.push(item.path)
+            }}
             className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-all border-b-2 ${
               activeTab === item.id
                 ? "bg-[#334155] text-white border-blue-500 font-bold"
@@ -88,11 +100,15 @@ export default function DashboardASM() {
       <div className="flex flex-1 p-4 gap-4 overflow-hidden">
         {/* CỘT BỘ LỌC BÊN TRÁI */}
         <aside className="w-64 bg-[#0f172a] rounded-xl border border-slate-800 p-4 flex flex-col gap-4 text-xs">
-          {/* Box User Info */}
+          {/* Box User Info & Nút Đăng xuất */}
           <div className="bg-[#1e293b] p-3 rounded-lg border border-slate-700/50">
             <div className="text-slate-400">Xin chào, <span className="text-white font-bold">Nguyễn Văn Hòa</span></div>
             <div className="flex gap-2 mt-2">
-              <Button size="sm" variant="destructive" className="h-7 text-[10px] bg-amber-600 hover:bg-amber-700">
+              <Button 
+                size="sm" 
+                onClick={handleLogout}
+                className="h-7 text-[10px] bg-amber-600 hover:bg-amber-700 text-white flex items-center font-semibold"
+              >
                 <LogOut className="w-3 h-3 mr-1" /> Đăng xuất
               </Button>
             </div>
