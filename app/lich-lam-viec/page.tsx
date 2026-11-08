@@ -30,6 +30,7 @@ const INITIAL_STAFF = [
   { id: 6, name: "Phạm Đức Phong" },
   { id: 7, name: "Đặng Lê Hoàng" },
   { id: 8, name: "Phan Hoàng Bảo Long" },
+  { id: 9, name: "Phạm Thanh Nhã" },
 ]
 
 // Tạo danh sách 30 ngày trong tháng 11/2026
