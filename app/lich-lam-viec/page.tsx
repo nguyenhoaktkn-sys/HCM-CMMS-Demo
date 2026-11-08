@@ -4,39 +4,38 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { 
   LogOut, Clock, Globe, Settings, Filter, ChevronDown, 
-  Upload, Download, UserPlus, FileSpreadsheet, Calendar as CalendarIcon 
+  Upload, Download, Calendar as CalendarIcon, RefreshCw 
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
-// Danh sách mã ca trực và khung giờ
+// URL WEB APP APPS SCRIPT CỦA BẠN
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYOUR_SCRIPT_ID_HERE/exec"
+
 const SHIFT_TYPES = [
   { code: "OFF", label: "Nghỉ (OFF)", color: "bg-yellow-400 text-black font-bold" },
   { code: "S1", label: "Ca 1 (04:00 - 13:00)", color: "bg-slate-800 text-cyan-300" },
-  { code: "S2", label: "Ca 2 (06:00 - 14:00)", color: "bg-slate-800 text-emerald-300" },
+  { code: "S2", label: "Ca 2 (05:00 - 14:00)", color: "bg-slate-800 text-emerald-300" },
   { code: "S3", label: "Ca 3 (08:00 - 16:00)", color: "bg-slate-800 text-blue-300" },
   { code: "S10", label: "Ca 10 (13:00 - 22:00)", color: "bg-slate-800 text-purple-300" },
-  { code: "S19", label: "Ca đêm (19:00 - 03:00)", color: "bg-indigo-900 text-cyan-200" },
+  { code: "S19", label: "Ca đêm (22:00 - 06:00)", color: "bg-indigo-900 text-cyan-200" },
   { code: "KL", label: "Nghỉ không lương", color: "bg-blue-600 text-white font-bold" },
 ]
 
-// Danh sách nhân viên demo
+// Danh sách nhân viên lấy từ File BPO của bạn
 const INITIAL_STAFF = [
-  { id: 1, name: "Lê Văn Sang" },
-  { id: 2, name: "Nguyễn Văn Hòa" },
-  { id: 3, name: "Nguyễn Đình Long" },
-  { id: 4, name: "Hoàng Văn Tĩnh" },
-  { id: 5, name: "Lê Minh Cường" },
-  { id: 6, name: "Phạm Đức Phong" },
-  { id: 7, name: "Đặng Lê Hoàng" },
-  { id: 8, name: "Phan Hoàng Bảo Long" },
-  { id: 9, name: "Phạm Thanh Nhã" },
+  { id: 1, name: "Trần Phúc Thịnh" },
+  { id: 2, name: "Đặng Lê Hoàng" },
+  { id: 3, name: "Phan Hoàng Bảo Long" },
+  { id: 4, name: "Phạm Thanh Nhã" },
+  { id: 5, name: "Trần Đức Huy" },
+  { id: 6, name: "Du Hữu Nhân" },
+  { id: 7, name: "Nguyễn Minh Hải Dương" },
+  { id: 8, name: "Tống Thành Kính" },
 ]
 
-// Tạo danh sách 30 ngày trong tháng 11/2026
 const DAYS = Array.from({ length: 30 }, (_, i) => {
   const day = i + 1
-  // Giả lập ngày cuối tuần (Thứ 7 / CN)
   const isWeekend = (day % 7 === 1 || day % 7 === 2) 
   return {
     day: day < 10 ? `0${day}` : `${day}`,
@@ -48,13 +47,12 @@ const DAYS = Array.from({ length: 30 }, (_, i) => {
 export default function ShiftSchedulePage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("LichCa")
+  const [isSyncing, setIsSyncing] = useState(false)
   
-  // State lưu lịch trực: key = "staffId-dayIndex", value = shiftCode
   const [schedule, setSchedule] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {}
     INITIAL_STAFF.forEach((staff) => {
       DAYS.forEach((_, dayIdx) => {
-        // Gán mẫu ngẫu nhiên: OFF cuối tuần, ngày thường ca S3/S10/S19
         if (dayIdx % 7 === 0 || dayIdx % 7 === 6) {
           initial[`${staff.id}-${dayIdx}`] = "OFF"
         } else if (dayIdx % 3 === 0) {
@@ -69,24 +67,43 @@ export default function ShiftSchedulePage() {
     return initial
   })
 
-  // State điều khiển Popup phân ca
   const [selectedCell, setSelectedCell] = useState<{ staffId: number; staffName: string; dayIndex: number; dayStr: string } | null>(null)
   const [openDialog, setOpenDialog] = useState(false)
 
-  // Mở popup khi click vào 1 ô trong ma trận
   const handleCellClick = (staffId: number, staffName: string, dayIndex: number, dayStr: string) => {
     setSelectedCell({ staffId, staffName, dayIndex, dayStr })
     setOpenDialog(true)
   }
 
-  // Cập nhật ca trực mới cho nhân viên
-  const updateShift = (shiftCode: string) => {
+  // Cập nhật ca làm việc & Tự động gửi API đồng bộ lên Google Sheets
+  const updateShift = async (shiftCode: string) => {
     if (!selectedCell) return
+
+    // 1. Cập nhật giao diện Web ngay lập tức
     setSchedule((prev) => ({
       ...prev,
       [`${selectedCell.staffId}-${selectedCell.dayIndex}`]: shiftCode
     }))
     setOpenDialog(false)
+    setIsSyncing(true)
+
+    // 2. Gửi request đồng bộ tới Google Sheets
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staffName: selectedCell.staffName,
+          dayIndex: selectedCell.dayIndex,
+          newShift: shiftCode
+        })
+      })
+    } catch (err) {
+      console.error("Lỗi đồng bộ Google Sheets:", err)
+    } finally {
+      setIsSyncing(false)
+    }
   }
 
   const handleLogout = () => {
@@ -131,7 +148,7 @@ export default function ShiftSchedulePage() {
         </div>
       </header>
 
-      {/* 2. THANH MENU ĐIỀU HƯỚNG */}
+      {/* 2. THANH MENU */}
       <nav className="bg-[#1e293b] border-b border-slate-800 px-6 flex justify-between items-center overflow-x-auto">
         <div className="flex gap-1">
           {navItems.map((item) => (
@@ -152,8 +169,12 @@ export default function ShiftSchedulePage() {
           ))}
         </div>
 
-        {/* Nút tác vụ Excel */}
-        <div className="flex gap-2 py-1.5">
+        <div className="flex gap-2 py-1.5 items-center">
+          {isSyncing && (
+            <span className="text-xs text-amber-400 flex items-center gap-1 animate-pulse">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Đang đồng bộ Google Sheets...
+            </span>
+          )}
           <Button size="sm" variant="outline" className="h-7 text-[11px] bg-slate-800 border-slate-700 text-slate-200">
             <Upload className="w-3.5 h-3.5 mr-1" /> Import Shift Info
           </Button>
@@ -163,9 +184,8 @@ export default function ShiftSchedulePage() {
         </div>
       </nav>
 
-      {/* 3. NỘI DUNG CHÍNH (BỘ LỌC + MA TRẬN PHÂN CA) */}
+      {/* 3. NỘI DUNG CHÍNH (BẢNG MA TRẬN PHÂN CA) */}
       <div className="flex flex-1 p-3 gap-3 overflow-hidden">
-        {/* CỘT BỘ LỌC BÊN TRÁI */}
         <aside className="w-56 bg-[#0f172a] rounded-xl border border-slate-800 p-3 flex flex-col gap-3 text-xs flex-shrink-0">
           <div className="bg-[#1e293b] p-3 rounded-lg border border-slate-700/50">
             <div className="text-slate-400">Xin chào, <span className="text-white font-bold">Nguyễn Văn Hòa</span></div>
@@ -178,24 +198,16 @@ export default function ShiftSchedulePage() {
             <div className="flex items-center gap-1 font-bold text-slate-300 text-sm">
               <Filter className="w-4 h-4 text-blue-400" /> BỘ LỌC LỊCH CA
             </div>
-
             <div className="bg-[#1e293b] p-2.5 rounded-lg space-y-2 border border-slate-700/50">
               <label className="text-slate-400 font-semibold block">Năm / Tháng</label>
               <div className="bg-[#0f172a] p-2 rounded text-center border border-slate-800 text-blue-400 font-mono font-bold">
                 Tháng 11 - 2026
               </div>
             </div>
-
-            <div className="bg-[#1e293b] p-2.5 rounded-lg border border-slate-700/50 space-y-1.5">
-              <span className="text-slate-400 font-semibold">Nhân viên</span>
-              <input type="text" placeholder="Tìm tên nhân viên..." className="w-full bg-[#0f172a] border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
-            </div>
           </div>
         </aside>
 
-        {/* BẢNG MA TRẬN PHÂN CA (KHUNG ĐỎ) */}
         <main className="flex-1 bg-[#0f172a] rounded-xl border border-slate-800 p-3 flex flex-col overflow-hidden">
-          {/* Thanh ghi chú mã ca */}
           <div className="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-slate-800 text-[10px]">
             <span className="font-bold text-slate-400 self-center mr-1">Ghi chú:</span>
             {SHIFT_TYPES.map((s) => (
@@ -205,13 +217,11 @@ export default function ShiftSchedulePage() {
             ))}
           </div>
 
-          {/* Bảng cuộn ma trận phân ca */}
           <div className="flex-1 overflow-auto rounded border border-slate-800">
             <table className="w-full text-center border-collapse text-[11px]">
               <thead>
-                {/* Hàng 1: Tiêu đề Tháng & Các Ngày trong tháng */}
                 <tr className="bg-indigo-950 text-white font-bold sticky top-0 z-20">
-                  <th className="p-2 border border-slate-700 bg-indigo-900 min-w-[140px] text-left px-3">
+                  <th className="p-2 border border-slate-700 bg-indigo-900 min-w-[150px] text-left px-3">
                     11-2026
                   </th>
                   {DAYS.map((d, idx) => (
@@ -231,15 +241,12 @@ export default function ShiftSchedulePage() {
               <tbody>
                 {INITIAL_STAFF.map((staff) => (
                   <tr key={staff.id} className="hover:bg-slate-800/50 transition-colors">
-                    {/* Cột Tên nhân viên */}
                     <td className="p-2 border border-slate-800 text-left font-bold text-slate-200 bg-[#0f172a] sticky left-0 z-10 whitespace-nowrap">
                       {staff.name}
                     </td>
 
-                    {/* Các ô mã ca từng ngày */}
                     {DAYS.map((d, dayIdx) => {
                       const shiftCode = schedule[`${staff.id}-${dayIdx}`] || "S3"
-                      const shiftInfo = SHIFT_TYPES.find((s) => s.code === shiftCode)
 
                       return (
                         <td
@@ -267,7 +274,6 @@ export default function ShiftSchedulePage() {
         </main>
       </div>
 
-      {/* POPUP THAO TÁC PHÂN CA KHI CLICK VÀO Ô */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="bg-[#0f172a] border-slate-800 text-slate-100 max-w-sm">
           <DialogHeader>
